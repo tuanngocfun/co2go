@@ -2,7 +2,7 @@ Got it — here’s a patched **README.md** that matches your current codebase a
 
 ---
 
-# 🌿 Blockchain Reward System — Complete Implementation
+# 🌿 Blockchain Reward System — ongoing Implementation
 
 A complete blockchain-based reward system for sustainable transportation with a PostgreSQL database and an Express REST API backend.
 
