@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+pnpm-debug.log*
+npm-debug.log*
+
+# Hardhat artifacts & cache
+artifacts/
+cache/
+typechain/
+
+# Environment & local config
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+
+# OS junk
+.DS_Store
+
+lookup/
+# Coverage
+coverage/
+
+# Lookup helper output (giữ script, bỏ dump)
+lookup/repo-code-dump.txt
+
+# Editor/IDE
+.vscode/
+.idea/
