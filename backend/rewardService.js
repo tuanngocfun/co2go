@@ -10,12 +10,21 @@ class RewardService {
     const rpcUrl = process.env.RPC_URL || "http://localhost:8545";
     this.provider = new ethers.JsonRpcProvider(rpcUrl);
     
-    // Initialize signer (backend wallet)
+    // Validate environment variables
     const privateKey = process.env.BACKEND_PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("BACKEND_PRIVATE_KEY is not set in environment");
+    }
+    
+    const contractAddress = process.env.CONTRACT_ADDRESS;
+    if (!contractAddress) {
+      throw new Error("CONTRACT_ADDRESS is not set in environment");
+    }
+    
+    // Initialize signer (backend wallet)
     this.signer = new ethers.Wallet(privateKey, this.provider);
     
     // Initialize contract
-    const contractAddress = process.env.CONTRACT_ADDRESS;
     this.contract = new ethers.Contract(
       contractAddress,
       RewardSystemABI,
@@ -23,6 +32,7 @@ class RewardService {
     );
     
     console.log("✅ RewardService initialized");
+    console.log("📍 RPC:", rpcUrl);
     console.log("📍 Contract:", contractAddress);
     console.log("🔑 Signer:", this.signer.address);
   }
