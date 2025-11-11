@@ -48,11 +48,13 @@ class RewardCalculator {
    *   emissions_bonus = emissions_saved / EMISSIONS_BONUS_FACTOR
    * 
    * This rewards both trip effort (distance/duration) and environmental benefit
+   * 
+   * IMPORTANT: Uses integer-style division to match Solidity on-chain calculations
    */
   calculatePoints(mode, distance, duration) {
-    // Convert to km and minutes
-    const distanceKm = distance / 1000; // meters to km
-    const durationMin = duration / 60;  // seconds to minutes
+    // Convert to km and minutes using integer division (matches Solidity)
+    const distanceKm = Math.floor(distance / 1000); // meters to km
+    const durationMin = Math.floor(duration / 60);  // seconds to minutes
 
     // Base points from distance and duration
     const basePoints = (distanceKm * this.ALPHA) + (durationMin * this.BETA);
@@ -61,10 +63,10 @@ class RewardCalculator {
     const emissionsSaved = this.calculateEmissionsSaved(mode, distance);
     
     // Bonus points: 1 point per 100g CO2e saved
-    const emissionsBonus = emissionsSaved / this.EMISSIONS_BONUS_FACTOR;
+    const emissionsBonus = Math.floor(emissionsSaved / this.EMISSIONS_BONUS_FACTOR);
 
     // Total points
-    const totalPoints = Math.floor(basePoints + emissionsBonus);
+    const totalPoints = basePoints + emissionsBonus;
 
     return totalPoints;
   }
@@ -72,9 +74,11 @@ class RewardCalculator {
   /**
    * Calculate emissions saved compared to driving a car
    * Returns grams of CO2 saved
+   * 
+   * IMPORTANT: Uses integer-style division to match Solidity on-chain calculations
    */
   calculateEmissionsSaved(mode, distance) {
-    const distanceKm = distance / 1000; // meters to km
+    const distanceKm = Math.floor(distance / 1000); // meters to km (integer division)
 
     // Emissions if this trip was made by a petrol car (reference)
     const carEmissions = distanceKm * this.emissionFactors.car;
@@ -84,18 +88,21 @@ class RewardCalculator {
     const modeEmissions = distanceKm * (factor !== null ? factor : this.emissionFactors.car);
 
     // Saved emissions in grams (never negative)
-    const saved = Math.max(0, Math.round(carEmissions - modeEmissions));
+    const saved = Math.max(0, carEmissions - modeEmissions);
     return saved;
   }
 
   /**
    * Calculate complete trip reward data
+   * 
+   * IMPORTANT: Uses integer-style division to match Solidity on-chain calculations
    */
   calculateTripReward(mode, distance, duration) {
-    const distanceKm = distance / 1000;
-    const durationMin = duration / 60;
+    // Integer-style km and min, like Solidity
+    const distanceKm = Math.floor(distance / 1000);
+    const durationMin = Math.floor(duration / 60);
 
-    const basePoints = Math.floor((distanceKm * this.ALPHA) + (durationMin * this.BETA));
+    const basePoints = (distanceKm * this.ALPHA) + (durationMin * this.BETA);
     const emissionsSaved = this.calculateEmissionsSaved(mode, distance);
     const emissionsBonus = Math.floor(emissionsSaved / this.EMISSIONS_BONUS_FACTOR);
     const totalPoints = basePoints + emissionsBonus;
@@ -104,15 +111,15 @@ class RewardCalculator {
       pointsEarned: totalPoints,
       emissionsSaved: emissionsSaved,
       breakdown: {
-        distanceKm: distanceKm.toFixed(2),
-        durationMin: durationMin.toFixed(1),
+        distanceKm,                    // keep as integer
+        durationMin,
         basePoints: basePoints,
         emissionsBonus: emissionsBonus,
         emissionsSavedGrams: emissionsSaved,
         finalPoints: totalPoints,
         co2SavedGrams: emissionsSaved,
         co2SavedKg: (emissionsSaved / 1000).toFixed(2),
-        formula: `(${distanceKm.toFixed(1)}km × ${this.ALPHA}) + (${durationMin.toFixed(1)}min × ${this.BETA}) + (${emissionsSaved}g ÷ ${this.EMISSIONS_BONUS_FACTOR}) = ${totalPoints} points`
+        formula: `(${distanceKm}km × ${this.ALPHA}) + (${durationMin}min × ${this.BETA}) + (${emissionsSaved}g ÷ ${this.EMISSIONS_BONUS_FACTOR}) = ${totalPoints} points`
       }
     };
   }
