@@ -80,8 +80,8 @@ class RewardCalculator {
     const carEmissions = distanceKm * this.emissionFactors.car;
 
     // Emissions for the provided mode (fallback to car factor if unknown)
-    const factor = this.getEmissionFactor(mode) || this.emissionFactors.car;
-    const modeEmissions = distanceKm * factor;
+    const factor = this.getEmissionFactor(mode);
+    const modeEmissions = distanceKm * (factor !== null ? factor : this.emissionFactors.car);
 
     // Saved emissions in grams (never negative)
     const saved = Math.max(0, Math.round(carEmissions - modeEmissions));
@@ -235,7 +235,8 @@ class RewardCalculator {
    * Get emission factor for a mode
    */
   getEmissionFactor(mode) {
-    return this.emissionFactors[mode.toLowerCase()] || null;
+    const factor = this.emissionFactors[mode.toLowerCase()];
+    return factor !== undefined ? factor : null;
   }
 
   /**
