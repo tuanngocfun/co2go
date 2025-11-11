@@ -71,18 +71,37 @@ app.get("/", (req, res) => {
 
 app.get("/health", async (req, res) => {
   try {
+    // Test database connection
     await database.testConnection();
-    res.json({
-      success: true,
-      status: "healthy",
+    
+    // Test blockchain connection by getting contract stats
+    let blockchainStatus = "disconnected";
+    let blockchainError = null;
+    
+    try {
+      await rewardService.getContractStats();
+      blockchainStatus = "connected";
+    } catch (error) {
+      blockchainError = error.message;
+    }
+    
+    const isHealthy = blockchainStatus === "connected";
+    const statusCode = isHealthy ? 200 : 503;
+    
+    res.status(statusCode).json({
+      success: isHealthy,
+      status: isHealthy ? "healthy" : "unhealthy",
       database: "connected",
-      blockchain: "connected",
+      blockchain: blockchainStatus,
+      blockchainError: blockchainError,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     res.status(503).json({
       success: false,
       status: "unhealthy",
+      database: "disconnected",
+      blockchain: "unknown",
       error: error.message,
     });
   }
