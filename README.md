@@ -211,16 +211,25 @@ PORT=3000
 > **Note:** The `BACKEND_PRIVATE_KEY` above is Hardhat's first test account private key (publicly known, for local development only).
 
 ### 3. Set Up Database
-
+For local development, the recommended way to start fresh is to drop and recreate the public schema, then rerun migrations:
 ```bash
-# Create database
-createdb reward_system
+psql -h localhost -p 5433 -U postgres -d reward_system \
+  -v ON_ERROR_STOP=1 -c \
+"DROP SCHEMA public CASCADE;
+ CREATE SCHEMA public;
+ GRANT ALL ON SCHEMA public TO postgres;
+ GRANT ALL ON SCHEMA public TO public;"
 
-# Run migrations (creates schema, views, triggers, sample data)
-npm run db:migrate
-# or
 pnpm run db:migrate
 ```
+This will:
+
+* Drop all existing tables, views, functions, triggers, and indexes
+* Recreate a clean `public` schema
+* Rebuild the full schema (tables, views, triggers)
+* Seed default rewards and system stats
+
+> 🔁 If your PostgreSQL runs on a different port or user, adjust `-p` and `-U` accordingly.
 
 ### 4. Start the System
 
