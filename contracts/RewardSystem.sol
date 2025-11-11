@@ -111,13 +111,23 @@ contract RewardSystem {
     ) external returns (uint256 pointsEarned) {
         require(!tripIdUsed[_user][_tripId], "Trip already recorded");
         
+        // Validate trip parameters to prevent cheating via direct contract calls
+        require(_distance > 0 && _distance <= 500_000, "Invalid distance (max 500km)");
+        require(_duration > 0 && _duration <= 86_400, "Invalid duration (max 24 hours)");
+        
+        // Basic speed check: prevent unrealistic speeds
+        uint256 distanceKm = _distance / 1000;
+        uint256 durationMin = _duration / 60;
+        if (durationMin > 0) {
+            uint256 avgSpeedKmPerMin = distanceKm / durationMin;
+            require(avgSpeedKmPerMin <= 3, "Average speed too high (max ~180 km/h)"); // ~180 km/h max
+        }
+        
         bytes32 tripHash = keccak256(
             abi.encodePacked(_tripId, _user, _mode, _distance, _duration)
         );
         
         // Calculate base points and emissions bonus
-        uint256 distanceKm = _distance / 1000; // convert meters to km
-        uint256 durationMin = _duration / 60;  // convert seconds to minutes
         uint256 basePoints = (distanceKm * ALPHA) + (durationMin * BETA);
         
         // Calculate emissions saved (car baseline vs actual mode)
