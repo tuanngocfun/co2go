@@ -1,58 +1,72 @@
 /**
  * Reward Calculator Service
- * Implements DEIRA 2024 emission factors and point calculation formulas
+ * Implements credible emission factors from UK DESNZ 2024, German UBA 2022,
+ * and academic research (Institut Polytechnique de Paris 2023).
+ * 
+ * References:
+ * [1] UK DESNZ 2024 conversion factors (CBP-8826.pdf)
+ * [2] German Federal Environment Agency (UBA) 2022 via NAVIT
+ * [3] TNMT analysis on e-scooters
+ * [4] Institut Polytechnique de Paris 2023 (e-bike life-cycle)
  */
 
 class RewardCalculator {
   constructor() {
-    // DEIRA 2024 Emission Factors (grams CO2 per km)
+    // Credible Emission Factors (grams CO2e per passenger-km)
+    // See .github/database_correction_setup.md for full documentation
     this.emissionFactors = {
-      car: 192,      // Average passenger car
-      bus: 89,       // Public bus
-      train: 41,     // Urban rail/metro
-      bike: 0,       // Bicycle (zero emissions)
-      walk: 0,       // Walking (zero emissions)
-      ebike: 5,      // Electric bicycle (considering electricity generation)
-      scooter: 8,    // Electric scooter
-      motorcycle: 103, // Motorcycle
+      car: 177,        // Petrol car, 1 occupant (UK DESNZ 2024) [1]
+      car4: 44,        // Petrol car, 4 occupants (UK DESNZ 2024) [1]
+      ev_car: 46,      // Electric car, 1 occupant (UK DESNZ 2024) [1]
+      bus: 105,        // Average local bus: (UK 108 + German 93) / 2 [1][2]
+      coach: 29,       // Long-distance bus: (UK 27 + German 31) / 2 [1][2]
+      train: 35,       // Domestic rail (UK DESNZ 2024) [1]
+      metro: 60,       // Metro/tram average (German UBA 2022) [2]
+      bike: 0,         // Bicycle direct emissions (UBA 2022) [2]
+      walk: 0,         // Walking direct emissions (UBA 2022) [2]
+      ebike: 13,       // E-bike life-cycle (Polytechnique Insights 2023) [4]
+      scooter: 25,     // E-scooter (TNMT analysis) [3]
+      motorcycle: 103, // Medium motorcycle (UK DEFRA/BEIS factors)
     };
 
     // Point calculation parameters
-    this.ALPHA = 10; // points per km
-    this.BETA = 2;   // points per minute
+    this.ALPHA = 10; // base points per km
+    this.BETA = 2;   // base points per minute
     
-    // Bonus multipliers for specific modes
-    this.modeMultipliers = {
-      walk: 1.2,   // 20% bonus for walking
-      bike: 1.1,   // 10% bonus for biking
-      ebike: 1.05, // 5% bonus for e-bike
-      bus: 1.0,    // No bonus for public transport (baseline)
-      train: 1.0,  // No bonus for public transport (baseline)
-      scooter: 1.0,
-      motorcycle: 0.5, // Reduced points (still better than car)
-      car: 0.0,    // No points for driving (comparison baseline)
-    };
+    // Emissions bonus: 1 point per 100g CO2e saved
+    this.EMISSIONS_BONUS_FACTOR = 100;
 
-    console.log("✅ RewardCalculator initialized with DEIRA 2024 factors");
+    console.log("✅ RewardCalculator initialized with credible emission factors");
+    console.log("   Sources: UK DESNZ 2024, German UBA 2022, academic research");
   }
 
   /**
    * Calculate points earned for a trip
-   * Formula: points = (distance_km * ALPHA + duration_min * BETA) * mode_multiplier
+   * New formula: points = base_points + emissions_bonus
+   * where:
+   *   base_points = (distance_km * ALPHA) + (duration_min * BETA)
+   *   emissions_bonus = emissions_saved / EMISSIONS_BONUS_FACTOR
+   * 
+   * This rewards both trip effort (distance/duration) and environmental benefit
    */
   calculatePoints(mode, distance, duration) {
     // Convert to km and minutes
     const distanceKm = distance / 1000; // meters to km
     const durationMin = duration / 60;  // seconds to minutes
 
-    // Base calculation
+    // Base points from distance and duration
     const basePoints = (distanceKm * this.ALPHA) + (durationMin * this.BETA);
 
-    // Apply mode multiplier
-    const multiplier = this.modeMultipliers[mode.toLowerCase()] || 1.0;
-    const points = Math.floor(basePoints * multiplier);
+    // Calculate emissions saved vs. driving a petrol car
+    const emissionsSaved = this.calculateEmissionsSaved(mode, distance);
+    
+    // Bonus points: 1 point per 100g CO2e saved
+    const emissionsBonus = emissionsSaved / this.EMISSIONS_BONUS_FACTOR;
 
-    return points;
+    // Total points
+    const totalPoints = Math.floor(basePoints + emissionsBonus);
+
+    return totalPoints;
   }
 
   /**
@@ -61,37 +75,44 @@ class RewardCalculator {
    */
   calculateEmissionsSaved(mode, distance) {
     const distanceKm = distance / 1000; // meters to km
-    
-    // Emissions if this trip was made by car
+
+    // Emissions if this trip was made by a petrol car (reference)
     const carEmissions = distanceKm * this.emissionFactors.car;
-    
-    // Emissions from actual mode
-    const modeEmissions = distanceKm * (this.emissionFactors[mode.toLowerCase()] || 0);
-    
-    // Emissions saved (difference)
-    const saved = Math.floor(carEmissions - modeEmissions);
-    
-    return Math.max(0, saved); // Never negative
+
+    // Emissions for the provided mode (fallback to car factor if unknown)
+    const factor = this.getEmissionFactor(mode) || this.emissionFactors.car;
+    const modeEmissions = distanceKm * factor;
+
+    // Saved emissions in grams (never negative)
+    const saved = Math.max(0, Math.round(carEmissions - modeEmissions));
+    return saved;
   }
 
   /**
    * Calculate complete trip reward data
    */
   calculateTripReward(mode, distance, duration) {
-    const points = this.calculatePoints(mode, distance, duration);
+    const distanceKm = distance / 1000;
+    const durationMin = duration / 60;
+
+    const basePoints = Math.floor((distanceKm * this.ALPHA) + (durationMin * this.BETA));
     const emissionsSaved = this.calculateEmissionsSaved(mode, distance);
-    
+    const emissionsBonus = Math.floor(emissionsSaved / this.EMISSIONS_BONUS_FACTOR);
+    const totalPoints = basePoints + emissionsBonus;
+
     return {
-      pointsEarned: points,
+      pointsEarned: totalPoints,
       emissionsSaved: emissionsSaved,
       breakdown: {
-        distanceKm: (distance / 1000).toFixed(2),
-        durationMin: (duration / 60).toFixed(1),
-        basePoints: Math.floor((distance / 1000) * this.ALPHA + (duration / 60) * this.BETA),
-        multiplier: this.modeMultipliers[mode.toLowerCase()] || 1.0,
-        finalPoints: points,
+        distanceKm: distanceKm.toFixed(2),
+        durationMin: durationMin.toFixed(1),
+        basePoints: basePoints,
+        emissionsBonus: emissionsBonus,
+        emissionsSavedGrams: emissionsSaved,
+        finalPoints: totalPoints,
         co2SavedGrams: emissionsSaved,
         co2SavedKg: (emissionsSaved / 1000).toFixed(2),
+        formula: `(${distanceKm.toFixed(1)}km × ${this.ALPHA}) + (${durationMin.toFixed(1)}min × ${this.BETA}) + (${emissionsSaved}g ÷ ${this.EMISSIONS_BONUS_FACTOR}) = ${totalPoints} points`
       }
     };
   }
@@ -124,13 +145,13 @@ class RewardCalculator {
   getTierProgress(totalPoints) {
     const tiers = this.getTierRequirements();
     const currentTier = tiers.find(t => totalPoints >= t.minPoints && totalPoints <= t.maxPoints);
-    
+
     if (!currentTier) {
       return null;
     }
 
     const nextTier = tiers.find(t => t.minPoints > totalPoints);
-    
+
     if (!nextTier) {
       // Already at highest tier
       return {
@@ -218,24 +239,19 @@ class RewardCalculator {
   }
 
   /**
-   * Get all emission factors
-   */
-  getAllEmissionFactors() {
-    return { ...this.emissionFactors };
-  }
-
-  /**
    * Compare modes for the same trip
    */
   compareModes(distance, duration) {
     const modes = Object.keys(this.emissionFactors);
     const comparisons = modes.map(mode => {
       const reward = this.calculateTripReward(mode, distance, duration);
+      const emissionFactor = this.emissionFactors[mode];
       return {
         mode,
         points: reward.pointsEarned,
         emissions: reward.emissionsSaved,
-        multiplier: this.modeMultipliers[mode],
+        emissionFactor: emissionFactor,
+        breakdown: reward.breakdown,
       };
     });
 
