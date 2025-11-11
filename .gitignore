@@ -30,3 +30,5 @@ lookup/repo-code-dump.txt
 .vscode/
 .idea/
 .github/
+
+deployments/localhost.json
