@@ -49,6 +49,7 @@ contract RewardSystem {
     // Reward calculation parameters
     uint256 public constant ALPHA = 10; // points per km
     uint256 public constant BETA = 2;   // points per minute
+    uint256 public constant EMISSIONS_BONUS_FACTOR = 100; // 1 point per 100g CO2 saved
     
     address public owner;
 
@@ -79,12 +80,19 @@ contract RewardSystem {
     constructor() {
         owner = msg.sender;
         
-        // Initialize emission factors (grams CO2 per km)
-        emissionFactors["car"] = 192;
-        emissionFactors["bus"] = 89;
-        emissionFactors["train"] = 41;
-        emissionFactors["bike"] = 0;
-        emissionFactors["walk"] = 0;
+        // Initialize emission factors (grams CO2 per km) - aligned with backend (UK DESNZ 2024, German UBA 2022)
+        emissionFactors["car"] = 177;      // Petrol car, 1 occupant
+        emissionFactors["car4"] = 44;      // Petrol car, 4 occupants
+        emissionFactors["ev_car"] = 46;    // Electric car, 1 occupant
+        emissionFactors["bus"] = 105;      // Average local bus
+        emissionFactors["coach"] = 29;     // Long-distance bus
+        emissionFactors["train"] = 35;     // Domestic rail
+        emissionFactors["metro"] = 60;     // Metro/tram
+        emissionFactors["bike"] = 0;       // Bicycle
+        emissionFactors["walk"] = 0;       // Walking
+        emissionFactors["ebike"] = 13;     // E-bike life-cycle
+        emissionFactors["scooter"] = 25;   // E-scooter
+        emissionFactors["motorcycle"] = 103; // Medium motorcycle
         
         // Initialize sample rewards
         _addReward("COFFEE_VOUCHER", "Free Coffee", 100);
@@ -107,14 +115,18 @@ contract RewardSystem {
             abi.encodePacked(_tripId, _user, _mode, _distance, _duration)
         );
         
-        // Calculate points: points = (distance_km * ALPHA) + (duration_min * BETA)
+        // Calculate base points and emissions bonus
         uint256 distanceKm = _distance / 1000; // convert meters to km
         uint256 durationMin = _duration / 60;  // convert seconds to minutes
-        pointsEarned = (distanceKm * ALPHA) + (durationMin * BETA);
+        uint256 basePoints = (distanceKm * ALPHA) + (durationMin * BETA);
         
-        // Calculate emissions saved (assuming they would have driven)
+        // Calculate emissions saved (car baseline vs actual mode)
         uint256 emissionsSaved = (distanceKm * emissionFactors["car"]) - 
                                  (distanceKm * emissionFactors[_mode]);
+        
+        // Add emissions bonus: 1 point per 100g CO2 saved
+        uint256 emissionsBonus = emissionsSaved / EMISSIONS_BONUS_FACTOR;
+        pointsEarned = basePoints + emissionsBonus;
         
         // Create trip record
         Trip memory newTrip = Trip({
