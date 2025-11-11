@@ -21,15 +21,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan("dev")); // Logging
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("❌ Error:", err);
-  res.status(500).json({
-    success: false,
-    error: err.message || "Internal server error",
-  });
-});
-
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -768,6 +759,15 @@ process.on("SIGINT", async () => {
   console.log("\nSIGINT received, closing server...");
   await database.close();
   process.exit(0);
+});
+
+// Error handling middleware (must be after all routes)
+app.use((err, req, res, next) => {
+  console.error("❌ Error:", err);
+  res.status(500).json({
+    success: false,
+    error: err.message || "Internal server error",
+  });
 });
 
 // Start the server
