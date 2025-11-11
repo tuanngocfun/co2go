@@ -38,7 +38,7 @@ export default function TripSimulator({ walletAddress, onTripSubmitted, apiBase 
         setPreview(data.data)
         setResult(null)
       } else {
-        setError(data.error || 'Failed to calculate points')
+        setError(data.error || 'Failed to calculate points. Please check your input values and try again.')
       }
     } catch (err) {
       setError(err.message)
@@ -67,7 +67,7 @@ export default function TripSimulator({ walletAddress, onTripSubmitted, apiBase 
         setPreview(null)
         onTripSubmitted()
       } else {
-        setError(data.error || 'Failed to submit trip')
+        setError(data.error || 'Failed to submit trip to blockchain. Please ensure the backend is running and try again.')
       }
     } catch (err) {
       setError(err.message)
@@ -145,7 +145,7 @@ export default function TripSimulator({ walletAddress, onTripSubmitted, apiBase 
           <p><strong>Points Earned:</strong> {result.pointsEarned}</p>
           <p><strong>Total Points:</strong> {result.totalPoints}</p>
           <p><strong>CO₂ Saved:</strong> {(result.emissionsSaved / 1000).toFixed(2)} kg</p>
-          <p><strong>TX Hash:</strong> <code style={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>{result.txHash}</code></p>
+          <p><strong>TX Hash:</strong> <code className="tx-hash">{result.txHash}</code></p>
           <p><strong>Block:</strong> {result.blockNumber}</p>
         </div>
       )}
