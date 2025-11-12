@@ -52,6 +52,10 @@ app.get("/", (req, res) => {
         leaderboard: "GET /api/users/leaderboard",
         activity: "GET /api/users/activity/:walletAddress",
       },
+      token: {
+        info: "GET /api/token/info",
+        balance: "GET /api/token/balance/:walletAddress",
+      },
       system: {
         stats: "GET /api/system/stats",
         daily: "GET /api/system/daily",
@@ -668,6 +672,62 @@ app.get("/api/users/activity/:walletAddress", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error getting user activity:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============================================
+// TOKEN ENDPOINTS
+// ============================================
+
+/**
+ * GET /api/token/info
+ * Get token contract information (for adding to MetaMask)
+ */
+app.get("/api/token/info", async (req, res) => {
+  try {
+    const tokenInfo = await rewardService.getTokenInfo();
+
+    res.json({
+      success: true,
+      data: tokenInfo,
+    });
+  } catch (error) {
+    console.error("❌ Error getting token info:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/token/balance/:walletAddress
+ * Get token balance for a wallet
+ */
+app.get("/api/token/balance/:walletAddress", async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+
+    // Validate wallet address
+    if (!ethers.isAddress(walletAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid wallet address",
+      });
+    }
+
+    const balance = await rewardService.getTokenBalance(walletAddress);
+
+    res.json({
+      success: true,
+      data: balance,
+    });
+  } catch (error) {
+    console.error("❌ Error getting token balance:", error);
     res.status(500).json({
       success: false,
       error: error.message,
