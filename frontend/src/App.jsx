@@ -3,6 +3,7 @@ import WalletSelector from './components/WalletSelector'
 import TripSimulator from './components/TripSimulator'
 import UserDashboard from './components/UserDashboard'
 import SystemStats from './components/SystemStats'
+import TokenInfo from './components/TokenInfo'
 
 const API_BASE = '/api'
 
@@ -29,9 +30,14 @@ function App() {
     <>
       <h1>🌍 CO2Go Reward System</h1>
       <div className="info-box">
-        <strong>Blockchain Demo:</strong> This UI demonstrates the complete flow: 
-        Trip → Backend API → Smart Contract → Database → Analytics
+        <strong>✨ Real Token Rewards:</strong> This system now mints actual ERC20 tokens to your wallet! 
+        Each trip earns real blockchain tokens you can see in MetaMask.
       </div>
+
+      <TokenInfo 
+        apiBase={API_BASE}
+        walletAddress={selectedWallet}
+      />
 
       <WalletSelector
         selectedWallet={selectedWallet}
