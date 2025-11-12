@@ -1,8 +1,9 @@
 const { ethers } = require("ethers");
 require("dotenv").config();
 
-// Import contract ABI (generated after compilation)
+// Import contract ABIs (generated after compilation)
 const RewardSystemABI = require("../artifacts/contracts/RewardSystem.sol/RewardSystem.json").abi;
+const CO2GoTokenABI = require("../artifacts/contracts/CO2GoToken.sol/CO2GoToken.json").abi;
 
 class RewardService {
   constructor() {
@@ -24,7 +25,7 @@ class RewardService {
     // Initialize signer (backend wallet)
     this.signer = new ethers.Wallet(privateKey, this.provider);
     
-    // Initialize contract
+    // Initialize RewardSystem contract
     this.contract = new ethers.Contract(
       contractAddress,
       RewardSystemABI,
@@ -35,6 +36,35 @@ class RewardService {
     console.log("📍 RPC:", rpcUrl);
     console.log("📍 Contract:", contractAddress);
     console.log("🔑 Signer:", this.signer.address);
+    
+    // Initialize token contract
+    this.initToken();
+  }
+  
+  async initToken() {
+    try {
+      // Get token address from RewardSystem contract
+      const tokenAddress = await this.contract.getTokenAddress();
+      this.tokenContract = new ethers.Contract(
+        tokenAddress,
+        CO2GoTokenABI,
+        this.signer
+      );
+      
+      const tokenSymbol = await this.tokenContract.symbol();
+      const tokenName = await this.tokenContract.name();
+      
+      console.log("💰 Token initialized:");
+      console.log("📍 Address:", tokenAddress);
+      console.log("🏷️  Name:", tokenName);
+      console.log("🔤 Symbol:", tokenSymbol);
+      
+      this.tokenAddress = tokenAddress;
+      this.tokenSymbol = tokenSymbol;
+      this.tokenName = tokenName;
+    } catch (error) {
+      console.error("⚠️  Token initialization failed:", error.message);
+    }
   }
 
   /**
@@ -102,12 +132,62 @@ class RewardService {
   async getBalance(userId) {
     try {
       const balance = await this.contract.getBalance(userId);
+      const balanceFormatted = await this.contract.getBalanceFormatted(userId);
       return {
         balance: balance.toString(),
-        balanceFormatted: ethers.formatUnits(balance, 0), // Points have no decimals
+        balanceFormatted: balanceFormatted.toString(),
+        tokenAddress: this.tokenAddress,
+        tokenSymbol: this.tokenSymbol,
       };
     } catch (error) {
       console.error("❌ Error getting balance:", error.message);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get token info (for adding to MetaMask)
+   */
+  async getTokenInfo() {
+    try {
+      if (!this.tokenContract) {
+        await this.initToken();
+      }
+      
+      const decimals = await this.tokenContract.decimals();
+      
+      return {
+        address: this.tokenAddress,
+        symbol: this.tokenSymbol,
+        name: this.tokenName,
+        decimals: decimals.toString(),
+      };
+    } catch (error) {
+      console.error("❌ Error getting token info:", error.message);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get token balance directly from token contract
+   */
+  async getTokenBalance(userId) {
+    try {
+      if (!this.tokenContract) {
+        await this.initToken();
+      }
+      
+      const balance = await this.tokenContract.balanceOf(userId);
+      const decimals = await this.tokenContract.decimals();
+      const formatted = ethers.formatUnits(balance, decimals);
+      
+      return {
+        raw: balance.toString(),
+        formatted: formatted,
+        symbol: this.tokenSymbol,
+      };
+    } catch (error) {
+      console.error("❌ Error getting token balance:", error.message);
       throw error;
     }
   }
