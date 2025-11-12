@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
+
+interface ICO2GoToken {
+    function mint(address to, uint256 amount) external;
+    function burn(address from, uint256 amount) external;
+    function balanceOf(address account) external view returns (uint256);
+    function decimals() external view returns (uint8);
+}
 
 contract RewardSystem {
+    // Token contract
+    ICO2GoToken public rewardToken;
+    
     // Structs
     struct Trip {
         uint256 tripId;
@@ -32,7 +42,6 @@ contract RewardSystem {
     }
 
     // State variables
-    mapping(address => uint256) public pointsBalance;
     mapping(address => Trip[]) public userTrips;
     mapping(address => Redemption[]) public userRedemptions;
     mapping(bytes32 => bool) public tripExists;
@@ -77,7 +86,9 @@ contract RewardSystem {
         _;
     }
 
-    constructor() {
+    constructor(address _tokenAddress) {
+        require(_tokenAddress != address(0), "Invalid token address");
+        rewardToken = ICO2GoToken(_tokenAddress);
         owner = msg.sender;
         
         // Initialize emission factors (grams CO2 per km) - aligned with backend (UK DESNZ 2024, German UBA 2022)
@@ -138,6 +149,9 @@ contract RewardSystem {
         uint256 emissionsBonus = emissionsSaved / EMISSIONS_BONUS_FACTOR;
         pointsEarned = basePoints + emissionsBonus;
         
+        // Convert points to tokens (1 point = 1 token with 18 decimals)
+        uint256 tokenAmount = pointsEarned * (10 ** rewardToken.decimals());
+        
         // Create trip record
         Trip memory newTrip = Trip({
             tripId: _tripId,
@@ -155,9 +169,11 @@ contract RewardSystem {
         userTrips[_user].push(newTrip);
         tripIdUsed[_user][_tripId] = true;
         tripExists[tripHash] = true;
-        pointsBalance[_user] += pointsEarned;
         totalTrips++;
         totalPointsIssued += pointsEarned;
+        
+        // Mint tokens to user (ACTUAL REWARD!)
+        rewardToken.mint(_user, tokenAmount);
         
         emit TripRecorded(_user, _tripId, _mode, pointsEarned, tripHash);
         
@@ -165,7 +181,14 @@ contract RewardSystem {
     }
 
     function getBalance(address _user) external view returns (uint256) {
-        return pointsBalance[_user];
+        // Return actual token balance (in smallest unit with decimals)
+        return rewardToken.balanceOf(_user);
+    }
+    
+    function getBalanceFormatted(address _user) external view returns (uint256) {
+        // Return balance in whole tokens (divide by decimals)
+        uint256 balance = rewardToken.balanceOf(_user);
+        return balance / (10 ** rewardToken.decimals());
     }
 
     function getTripHistory(address _user) external view returns (Trip[] memory) {
@@ -185,10 +208,13 @@ contract RewardSystem {
         
         require(reward.active, "Reward not available");
         require(reward.pointsCost == _pointsCost, "Invalid points cost");
-        require(pointsBalance[_user] >= _pointsCost, "Insufficient points");
         
-        // Deduct points
-        pointsBalance[_user] -= _pointsCost;
+        // Check token balance
+        uint256 tokenAmount = _pointsCost * (10 ** rewardToken.decimals());
+        require(rewardToken.balanceOf(_user) >= tokenAmount, "Insufficient tokens");
+        
+        // Burn tokens (remove from circulation)
+        rewardToken.burn(_user, tokenAmount);
         
         // Record redemption
         bytes32 txHash = keccak256(
@@ -207,7 +233,8 @@ contract RewardSystem {
         userRedemptions[_user].push(newRedemption);
         totalRedemptions++;
         
-        emit RewardRedeemed(_user, _rewardId, _pointsCost, pointsBalance[_user]);
+        uint256 newBalance = rewardToken.balanceOf(_user) / (10 ** rewardToken.decimals());
+        emit RewardRedeemed(_user, _rewardId, _pointsCost, newBalance);
         
         return true;
     }
@@ -221,7 +248,7 @@ contract RewardSystem {
     }
 
     function calculateTier(address _user) external view returns (string memory) {
-        uint256 balance = pointsBalance[_user];
+        uint256 balance = rewardToken.balanceOf(_user) / (10 ** rewardToken.decimals());
         
         if (balance >= 5000) return "Diamond";
         if (balance >= 2000) return "Gold";
@@ -280,7 +307,7 @@ contract RewardSystem {
             uint256 totalEmissionsSaved
         ) 
     {
-        balance = pointsBalance[_user];
+        balance = rewardToken.balanceOf(_user) / (10 ** rewardToken.decimals());
         tripCount = userTrips[_user].length;
         redemptionCount = userRedemptions[_user].length;
         
@@ -295,5 +322,14 @@ contract RewardSystem {
         for (uint i = 0; i < trips.length; i++) {
             totalEmissionsSaved += trips[i].emissionsSaved;
         }
+    }
+    
+    // Token info functions
+    function getTokenAddress() external view returns (address) {
+        return address(rewardToken);
+    }
+    
+    function getTokenDecimals() external view returns (uint8) {
+        return rewardToken.decimals();
     }
 }
