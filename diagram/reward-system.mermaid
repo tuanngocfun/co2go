@@ -1,0 +1,83 @@
+sequenceDiagram
+    participant MobileApp
+    participant Backend as Backend API
+    participant RewardEngine as Reward Calculator
+    participant SmartContract as Smart Contract<br/>(Blockchain)
+    participant Blockchain as Blockchain Network
+    participant PointsDB as Points Ledger DB
+
+    rect rgb(230, 245, 255)
+    Note over MobileApp,PointsDB: Phase 1: Trip Submission & Classification
+    
+    MobileApp->>Backend: POST /trips/submit<br/>{tripId, mode, distance, duration}
+    Backend->>Backend: Classify transport mode<br/>(ML Service)
+    Backend->>RewardEngine: calculatePoints(trip)
+    
+    RewardEngine->>RewardEngine: Formula: points = α × distance + β × duration<br/>Using DEIRA 2024 emission factors
+    RewardEngine-->>Backend: {points, emissions_saved}
+    
+    Backend->>SmartContract: recordTrip(userId, tripData, points)
+    SmartContract->>SmartContract: Validate trip data<br/>Check fraud flags
+    SmartContract->>Blockchain: Store trip record
+    Blockchain-->>SmartContract: txHash, blockNumber
+    
+    SmartContract->>SmartContract: Update user points balance<br/>points[userId] += calculated_points
+    SmartContract->>Blockchain: Commit state change
+    Blockchain-->>SmartContract: Confirmed
+    
+    SmartContract-->>Backend: {success, txHash, newBalance}
+    Backend->>PointsDB: INSERT trip record<br/>(for quick queries)
+    Backend-->>MobileApp: {tripId, pointsEarned, totalPoints}
+    end
+
+    rect rgb(240, 255, 240)
+    Note over MobileApp,PointsDB: Phase 2: Points Query & Verification
+    
+    MobileApp->>Backend: GET /points/balance
+    Backend->>SmartContract: getBalance(userId)
+    SmartContract->>Blockchain: Query state
+    Blockchain-->>SmartContract: points[userId]
+    SmartContract-->>Backend: {balance, lastUpdated}
+    Backend-->>MobileApp: {totalPoints, tier}
+    
+    MobileApp->>Backend: GET /trips/history
+    Backend->>PointsDB: SELECT * FROM trips<br/>WHERE userId = ?
+    PointsDB-->>Backend: Trip records
+    Backend->>SmartContract: verifyTrips(tripHashes[])
+    SmartContract->>Blockchain: Verify on-chain records
+    Blockchain-->>SmartContract: Verification results
+    SmartContract-->>Backend: {verified: true}
+    Backend-->>MobileApp: {trips[], verified}
+    end
+
+    rect rgb(255, 245, 235)
+    Note over MobileApp,PointsDB: Phase 3: Reward Redemption
+    
+    MobileApp->>Backend: POST /rewards/redeem<br/>{rewardId, pointsCost}
+    Backend->>SmartContract: redeemReward(userId, rewardId, points)
+    
+    SmartContract->>SmartContract: Check balance<br/>require(points[userId] >= cost)
+    
+    alt Sufficient Balance
+        SmartContract->>SmartContract: Deduct points<br/>points[userId] -= cost
+        SmartContract->>SmartContract: Record redemption<br/>redemptions[userId].push(rewardId)
+        SmartContract->>Blockchain: Commit transaction
+        Blockchain-->>SmartContract: txHash
+        SmartContract-->>Backend: {success, txHash, newBalance}
+        Backend->>PointsDB: INSERT redemption record
+        Backend-->>MobileApp: {success, reward details}
+    else Insufficient Balance
+        SmartContract-->>Backend: {error: "Insufficient points"}
+        Backend-->>MobileApp: {error: "Not enough points"}
+    end
+    end
+
+    rect rgb(255, 235, 245)
+    Note over SmartContract,Blockchain: Smart Contract Key Functions
+    Note over SmartContract: • recordTrip(userId, tripData, points)<br/>• getBalance(userId) → uint256<br/>• verifyTrips(hashes[]) → bool<br/>• redeemReward(userId, rewardId, cost)<br/>• getTripHistory(userId) → Trip[]<br/>• calculateTier(points) → string<br/>• emitRewardEvent(userId, points)
+    end
+
+    rect rgb(245, 240, 255)
+    Note over Blockchain: Blockchain Stored Data
+    Note over Blockchain: • User points balances (mapping)<br/>• Trip records (struct array)<br/>• Redemption history (struct array)<br/>• Emission factors (constants)<br/>• Reward catalog (mapping)<br/>• User tiers (calculated)
+    end

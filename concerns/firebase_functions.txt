@@ -1,0 +1,79 @@
+Status	Function	Trigger	Version	Requests (24 hrs)	Min / Max Instances	Timeout	Actions
+cleanupOldSessions
+us-central1
+v2	1	0 / 20	1m	
+calculateDailyStats
+us-central1
+v2	1	0 / 20	1m	
+login
+us-central1
+Request
+https://login-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+updateTripModeHandler
+us-central1
+Request
+https://updatetripmodehandler-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+initializeUser
+us-central1
+Request
+https://initializeuser-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+updateUserPointsTotal
+us-central1
+v2	1	0 / 20	1m	
+redeemVoucher
+us-central1
+Request
+https://redeemvoucher-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+getVouchers
+us-central1
+Request
+https://getvouchers-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+getRedemptions
+us-central1
+Request
+https://getredemptions-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+register
+us-central1
+Request
+https://register-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+finishTrip
+us-central1
+Request
+https://finishtrip-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+verifyUsernameEndpoint
+us-central1
+Request
+https://verifyusernameendpoint-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+initSchema
+us-central1
+Request
+https://initschema-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+health
+us-central1
+Request
+https://health-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+getUserProfile
+us-central1
+Request
+https://getuserprofile-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+getUserStatsHandler
+us-central1
+Request
+https://getuserstatshandler-fi5sq4sjda-uc.a.run.app
+v2	0	0 / 20	1m	
+syncTripToPostgres
+us-central1
+document.updated
+v2	0	0 / 20	1m	

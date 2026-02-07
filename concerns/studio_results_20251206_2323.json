@@ -1,0 +1,50 @@
+[
+  {
+    "id": "user_1764603863019_shsdq7i6d",
+    "username": "testuser_1764603862695",
+    "email": "testuser_1764603862695@example.com",
+    "display_name": "Test User",
+    "password_hash": "VGVzdEAxMjM0NTY=",
+    "role": "user",
+    "points_balance": "300",
+    "total_trips": "0",
+    "total_distance_km": "0",
+    "total_co2_saved_kg": "0",
+    "is_active": "true",
+    "created_at": "2025-12-01T15:44:23.704672Z",
+    "last_login": "2025-12-01T15:44:38.637836Z",
+    "last_active": "2025-12-01T15:44:23.704672Z"
+  },
+  {
+    "id": "user_1764836700635_xfc28e9mf",
+    "username": "testuser_1764836695112",
+    "email": "testuser_1764836695112@example.com",
+    "display_name": "Test User",
+    "password_hash": "VGVzdDEyMzQ1Ng==",
+    "role": "user",
+    "points_balance": "300",
+    "total_trips": "0",
+    "total_distance_km": "0",
+    "total_co2_saved_kg": "0",
+    "is_active": "true",
+    "created_at": "2025-12-04T08:25:00.753805Z",
+    "last_login": "2025-12-04T08:25:04.969548Z",
+    "last_active": "2025-12-04T08:25:00.753805Z"
+  },
+  {
+    "id": "user_1764837432149_ptantjmp0",
+    "username": "aoden555",
+    "email": "lethainguyenhoang@gmail.com",
+    "display_name": "aoden555",
+    "password_hash": "QW5oeWV1ZW0xQA==",
+    "role": "user",
+    "points_balance": "500",
+    "total_trips": "0",
+    "total_distance_km": "0",
+    "total_co2_saved_kg": "0",
+    "is_active": "true",
+    "created_at": "2025-12-04T08:37:12.251959Z",
+    "last_login": "2025-12-06T16:14:51.408342Z",
+    "last_active": "2025-12-04T08:37:12.251959Z"
+  }
+]

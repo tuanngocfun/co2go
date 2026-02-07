@@ -1,0 +1,128 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: getvouchers
+  namespace: '854291580212'
+  selfLink: /apis/serving.knative.dev/v1/namespaces/854291580212/services/getvouchers
+  uid: b00527e2-bf7b-48cb-a9e1-fe94ad759681
+  resourceVersion: AAZFSYHQDKc
+  generation: 10
+  creationTimestamp: '2025-11-27T01:27:07.244740Z'
+  labels:
+    goog-drz-cloudfunctions-location: us-central1
+    firebase-functions-hash: 33fba393d43dc33b8c729222d3d40611ca3d98a6
+    goog-managed-by: cloudfunctions
+    goog-cloudfunctions-runtime: nodejs24
+    cloud.googleapis.com/location: us-central1
+    goog-drz-cloudfunctions-id: getvouchers
+  annotations:
+    serving.knative.dev/creator: service-854291580212@gcf-admin-robot.iam.gserviceaccount.com
+    serving.knative.dev/lastModifier: service-854291580212@gcf-admin-robot.iam.gserviceaccount.com
+    run.googleapis.com/custom-audiences: '["https://us-central1-green-travel-app-90326.cloudfunctions.net/getVouchers"]'
+    run.googleapis.com/client-name: cli-firebase
+    cloudfunctions.googleapis.com/function-id: getVouchers
+    run.googleapis.com/build-source-location: gs://gcf-v2-sources-854291580212-us-central1/getVouchers/function-source.zip#1765031860637884
+    run.googleapis.com/build-environment-variables: '{"GOOGLE_NODE_RUN_SCRIPTS":""}'
+    run.googleapis.com/build-function-target: getVouchers
+    run.googleapis.com/build-service-account: projects/green-travel-app-90326/serviceAccounts/854291580212-compute@developer.gserviceaccount.com
+    run.googleapis.com/build-enable-automatic-updates: 'true'
+    run.googleapis.com/build-base-image: us-central1-docker.pkg.dev/serverless-runtimes/google-24-full/runtimes/nodejs24
+    run.googleapis.com/build-image-uri: us-central1-docker.pkg.dev/green-travel-app-90326/gcf-artifacts/green--travel--app--90326__us--central1__register:version_1
+    run.googleapis.com/build-name: projects/854291580212/locations/us-central1/builds/d8f1dae6-424a-4520-82ae-6fda6330f3be
+    run.googleapis.com/operation-id: d2bd4c1d-1b67-4d90-839a-101fdb482a4d
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/urls: '["https://getvouchers-854291580212.us-central1.run.app","https://us-central1-green-travel-app-90326.cloudfunctions.net/getVouchers","https://getvouchers-fi5sq4sjda-uc.a.run.app"]'
+spec:
+  template:
+    metadata:
+      name: getvouchers-00010-rey
+      labels:
+        goog-drz-cloudfunctions-location: us-central1
+        firebase-functions-hash: 33fba393d43dc33b8c729222d3d40611ca3d98a6
+        goog-drz-cloudfunctions-id: getvouchers
+        run.googleapis.com/startupProbeType: Default
+      annotations:
+        run.googleapis.com/client-name: cli-firebase
+        cloudfunctions.googleapis.com/trigger-type: HTTP_TRIGGER
+        autoscaling.knative.dev/maxScale: '20'
+        run.googleapis.com/base-images: '{"worker":"us-central1-docker.pkg.dev/serverless-runtimes/google-24-full/runtimes/nodejs24"}'
+        run.googleapis.com/startup-cpu-boost: 'true'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 60
+      serviceAccountName: 854291580212-compute@developer.gserviceaccount.com
+      containers:
+      - name: worker
+        image: us-central1-docker.pkg.dev/green-travel-app-90326/gcf-artifacts/green--travel--app--90326__us--central1__register:version_1
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: PG_HOST
+          value: 34.143.210.224
+        - name: PG_PORT
+          value: '5432'
+        - name: PG_USER
+          value: postgres
+        - name: PG_PASSWORD
+          value: 108bB2212!2025
+        - name: PG_DB
+          value: low_emission_mobility
+        - name: CLOUD_SQL_CONNECTION_NAME
+          value: green-travel-app-90326:asia-southeast1:low-emission-mobility-db
+        - name: BLOCKCHAIN_RPC
+          value: https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+        - name: BLOCKCHAIN_PRIVATE_KEY
+          value: your_private_key_here
+        - name: CONTRACT_ADDRESS
+          value: 0x...
+        - name: BLOCKCHAIN_ENABLED
+          value: 'true'
+        - name: FIREBASE_CONFIG
+          value: '{"projectId":"green-travel-app-90326","storageBucket":"green-travel-app-90326.firebasestorage.app"}'
+        - name: GCLOUD_PROJECT
+          value: green-travel-app-90326
+        - name: EVENTARC_CLOUD_EVENT_SOURCE
+          value: projects/green-travel-app-90326/locations/us-central1/services/getVouchers
+        - name: FUNCTION_TARGET
+          value: getVouchers
+        - name: LOG_EXECUTION_ID
+          value: 'true'
+        - name: FUNCTION_SIGNATURE_TYPE
+          value: http
+        resources:
+          limits:
+            cpu: '1'
+            memory: 256Mi
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+          tcpSocket:
+            port: 8080
+      runtimeClassName: run.googleapis.com/linux-base-image-update
+  traffic:
+  - percent: 100
+    latestRevision: true
+status:
+  observedGeneration: 10
+  conditions:
+  - type: Ready
+    status: 'True'
+    lastTransitionTime: '2025-12-06T14:37:53.088679Z'
+  - type: ConfigurationsReady
+    status: 'True'
+    lastTransitionTime: '2025-12-06T14:37:51.142417Z'
+  - type: RoutesReady
+    status: 'True'
+    lastTransitionTime: '2025-12-06T14:37:53.026207Z'
+  latestReadyRevisionName: getvouchers-00010-rey
+  latestCreatedRevisionName: getvouchers-00010-rey
+  traffic:
+  - revisionName: getvouchers-00010-rey
+    percent: 100
+    latestRevision: true
+  url: https://getvouchers-fi5sq4sjda-uc.a.run.app
+  address:
+    url: https://getvouchers-fi5sq4sjda-uc.a.run.app

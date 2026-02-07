@@ -1,0 +1,11 @@
+{
+  "network": "amoy",
+  "tokenAddress": "0x3bf9bd06C9053FB389ee8937A2F8aD1a50618b2d",
+  "tokenName": "CO2Go Points",
+  "tokenSymbol": "C2GP",
+  "deployer": "0x6f5Fc373dD472728D22D81Daf91F5169F8B726a8",
+  "timestamp": "2025-11-12T00:00:00.000Z",
+  "notes": "CO2GoToken deployed successfully. RewardSystem pending.",
+  "contractAddress": "0x95DdD90C8DA187D146518c2cf97F2b516F18e602",
+  "rewardSystemDeployed": "2025-12-09T04:08:42.895Z"
+}
