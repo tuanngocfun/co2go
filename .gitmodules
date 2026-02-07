@@ -1,0 +1,3 @@
+[submodule "concerns/Green_Mobile_App"]
+	path = concerns/Green_Mobile_App
+	url = https://github.com/HarryDuong81/Green_Mobile_App.git
